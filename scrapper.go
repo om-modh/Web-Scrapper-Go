@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"fmt"
 	"log"
 	"os"
 
@@ -18,28 +19,11 @@ func main() {
 	var pokemonProducts []PokemonProduct
 
 	// creating a new Colly instance
-	c := colly.NewCollector(colly.AllowedDomains("www.scrapeme.live", "scrapeme.live"))
+	c := colly.NewCollector()
 	// flag := true
-	i := 1
-	limit := 5
 
-	
 	pagetoscrape := "https://scrapeme.live/shop/page/1/"
-	var pagestoscrape []string
-	discoveredPages := []string{pagetoscrape}
 
-	c.OnHTML("a.page-numbers", func(e *colly.HTMLElement) {
-		newPage := e.Attr("href")
-
-		if !contains(pagestoscrape, newPage) {
-			if !contains(discoveredPages, newPage) {
-				pagestoscrape = append(pagestoscrape, newPage)
-			}
-			discoveredPages = append(discoveredPages, newPage)
-		}
-	})
-
-	// scraping logic
 	c.OnHTML("li.type-product", func(e *colly.HTMLElement) {
 		pokemonProduct := PokemonProduct{}
 		pokemonProduct.url = e.ChildAttr("a", "href")
@@ -50,20 +34,21 @@ func main() {
 		pokemonProducts = append(pokemonProducts, pokemonProduct)
 	})
 
-	c.OnScraped(func(response *colly.Response) {
-		if len(pagestoscrape) != 0 && i < limit {
-			pagetoscrape = pagestoscrape[0]
-			pagestoscrape = pagestoscrape[1:]
-			i++
-			c.Visit(pagetoscrape)
-		}
+	c.OnHTML("li a.page-numbers", func(e *colly.HTMLElement) {
+		c.Visit(e.Request.AbsoluteURL(e.Attr("href")))
+
 	})
-	// visiting the target page
+
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("visiting", r.URL)
+		// fmt.Println(pokemonProducts)
+	})
+
 	c.Visit(pagetoscrape)
 
 	//-------------------------------------------------------------------------------------------------------------
 
-	// opening the CSV file
+	// // opening the CSV file
 	file, err := os.Create("products.csv")
 	if err != nil {
 		log.Fatalln("Failed to create output CSV file", err)
@@ -98,3 +83,4 @@ func main() {
 
 	defer writer.Flush()
 }
+

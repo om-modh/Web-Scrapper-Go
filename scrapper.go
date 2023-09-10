@@ -20,7 +20,6 @@ func main() {
 
 	// creating a new Colly instance
 	c := colly.NewCollector()
-	// flag := true
 
 	pagetoscrape := "https://scrapeme.live/shop/page/1/"
 
@@ -41,7 +40,6 @@ func main() {
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("visiting", r.URL)
-		// fmt.Println(pokemonProducts)
 	})
 
 	c.Visit(pagetoscrape)
